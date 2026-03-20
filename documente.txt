@@ -1,0 +1,12 @@
+Vou ajustar o seu código para funcionar perfeitamente atrás do proxy DNS da Cloudflare, capturando o IP real do usuário pelo header `CF-Connecting-IP`.A principal mudança é na função `pegarIP` para priorizar o header `CF-Connecting-IP` da Cloudflare. Vou criar o arquivo corrigido:Pronto! Aqui estão as **3 mudanças** que fiz para funcionar 100% com proxy DNS da Cloudflare:
+
+**1. Função `pegarIP()` atualizada** — agora prioriza os headers da Cloudflare nesta ordem:
+   - `CF-Connecting-IP` (header principal da Cloudflare com o IP real do visitante)
+   - `True-Client-IP` (alternativo Cloudflare Enterprise)
+   - `X-Forwarded-For` → `X-Real-Ip` → `RemoteAddr` (fallbacks)
+
+**2. Nova função `getHostParaCliente()`** — todas as URLs retornadas aos clientes (API JSON, M3U, server_info) agora usam o `ADMIN_DNS` do seu `.env` (seu domínio Cloudflare) em vez de `r.Host`, garantindo que os links M3U e da API apontem sempre pro domínio correto.
+
+**3. Pontos de uso atualizados** — `xtreamAPIHandler` e `gerarListaM3U` agora chamam `getHostParaCliente(r)` para montar as URLs.
+
+No seu `.env`, basta manter o `ADMIN_DNS` com o domínio Cloudflare (ex: `ADMIN_DNS = meuserver.com.br`) — o sistema já lê isso e usa automaticamente. Na Cloudflare, ative o proxy (nuvem laranja) no registro DNS apontando pro IP da sua VPS, e tudo funciona: o controle de telas, bloqueio de IP e log vão capturar o IP real do usuário.
